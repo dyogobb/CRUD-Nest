@@ -12,6 +12,7 @@ interface FindOneUserResponse {
 
 interface LoginResponse {
   message: string;
+  data?: User;
   isLogged: boolean;
 }
 
@@ -64,6 +65,7 @@ export class UserService {
       return {
         message: 'Login realizado com sucesso.',
         isLogged: true,
+        data: user,
       };
     }
 

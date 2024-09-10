@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './user/user.entity';
-import { UsersModule } from './user/user.module';
+import { User } from './modules/user/user.entity';
+import { UsersModule } from './modules/user/user.module';
 import 'dotenv/config';
 
 @Module({
@@ -19,7 +19,7 @@ import 'dotenv/config';
       logging: true,
       entities: [User],
       subscribers: [],
-      migrations: [],
+      migrations: ['/modules/migrations'],
     }),
     UsersModule,
   ],

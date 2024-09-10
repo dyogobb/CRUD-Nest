@@ -2,10 +2,14 @@ import { Controller, Get, Post, Body, Res, Put } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './user.entity';
 import { Response } from 'express';
+import { AuthService } from '../auth/auth.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+  ) {}
   @Get()
   async findAll(): Promise<User[]> {
     return this.userService.findAll();
@@ -68,7 +72,7 @@ export class UserController {
     @Res() res: Response,
   ): Promise<Response> {
     try {
-      const response = await this.userService.userLogin(
+      const response = await this.authService.generateToken(
         userData.email,
         userData.password,
       );

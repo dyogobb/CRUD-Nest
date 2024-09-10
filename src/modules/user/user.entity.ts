@@ -18,4 +18,6 @@ export class User {
   password: string;
   @Column()
   isActive: boolean;
+  @Column({ nullable: true })
+  token?: string;
 }

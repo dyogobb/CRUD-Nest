@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { createDatabaseIfNotExists } from './database/create.db';
+import { createDatabaseIfNotExists } from './modules/database/create.db';
 import 'reflect-metadata';
 
 async function bootstrap() {
