@@ -1,8 +1,19 @@
-import { Controller, Get, Post, Body, Res, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Res,
+  Put,
+  UseGuards,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './user.entity';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -34,6 +45,7 @@ export class UserController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Put('update')
   async updateUser(
     @Body() userData: Partial<User>,
@@ -51,6 +63,7 @@ export class UserController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Get('find')
   async findUser(
     @Body() userData: Partial<User>,
@@ -77,6 +90,25 @@ export class UserController {
         userData.password,
       );
       return res.status(200).json(response);
+    } catch (error) {
+      return res.status(500).json({
+        error: error.message,
+      });
+    }
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('delete/:id')
+  async deleteUser(
+    @Body() userData: Partial<User>,
+    @Res() res: Response,
+    @Param('id') id: string,
+  ): Promise<Response> {
+    try {
+      await this.userService.updateUser(parseInt(id, 10), { isActive: false });
+      return res.status(202).json({
+        message: 'Usuário desativado com sucesso',
+      });
     } catch (error) {
       return res.status(500).json({
         error: error.message,

@@ -36,7 +36,11 @@ export class UserService {
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<void> {
+    if (userData.password) {
+      userData.password = await this.hashPassword(userData.password);
+    }
     await this.usersRepository.update(id, userData);
+    // await this.usersRepository.save(userData);
   }
 
   async findOneUser(email: string): Promise<FindOneUserResponse> {
