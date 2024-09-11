@@ -6,7 +6,6 @@ import {
   Res,
   Put,
   UseGuards,
-  Delete,
   Param,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -14,6 +13,14 @@ import { User } from './user.entity';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { AuthGuard } from '../auth/auth.guard';
+
+interface CreateUser {
+  frist_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  isActive: boolean;
+}
 
 @Controller('user')
 export class UserController {
@@ -28,15 +35,11 @@ export class UserController {
 
   @Post('create')
   async createUser(
-    @Body() userData: Partial<User>,
+    @Body() userData: CreateUser,
     @Res() res: Response,
   ): Promise<Response> {
     try {
-      const newUser = await this.userService.createUser(userData);
-      return res.status(201).json({
-        message: 'Usuário criado com sucesso',
-        newUser,
-      });
+      return res.status(200).json(await this.userService.createUser(userData));
     } catch (error) {
       return res.status(500).json({
         message: 'Erro ao criar usuário',
@@ -46,13 +49,19 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
-  @Put('update')
+  @Put('update/:id')
   async updateUser(
     @Body() userData: Partial<User>,
     @Res() res: Response,
+    @Param('id') id: string,
   ): Promise<any> {
     try {
-      await this.userService.updateUser(userData.id, userData);
+      if (userData.id) {
+        return res.status(401).json({
+          message: 'O id não pode ser alterado',
+        });
+      }
+      await this.userService.updateUser(parseInt(id), userData);
       return res.status(201).json({
         message: 'Usuário atualizado com sucesso',
       });

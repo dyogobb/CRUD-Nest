@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { AuthService } from '../auth/auth.service';
 
 interface FindOneUserResponse {
   message: string;
@@ -11,9 +12,27 @@ interface FindOneUserResponse {
 }
 
 interface LoginResponse {
-  message: string;
+  message?: string;
   data?: User;
   isLogged: boolean;
+  error?: Error;
+}
+
+interface UpdateUser {
+  frist_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  isActive: boolean;
+  token: string;
+}
+
+interface CreateUser {
+  frist_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  isActive: boolean;
 }
 
 @Injectable()
@@ -21,26 +40,18 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private authService: AuthService,
   ) {}
 
   async findAll(): Promise<User[]> {
     return this.usersRepository.find();
   }
 
-  async createUser(userData: Partial<User>): Promise<User> {
-    const hash = await this.hashPassword(userData.password);
-    userData.password = hash;
-    const newUser = this.usersRepository.create(userData);
-    const response = await this.usersRepository.save(newUser);
-    return response;
-  }
-
-  async updateUser(id: number, userData: Partial<User>): Promise<void> {
+  async updateUser(id: number, userData: Partial<UpdateUser>): Promise<void> {
     if (userData.password) {
       userData.password = await this.hashPassword(userData.password);
     }
     await this.usersRepository.update(id, userData);
-    // await this.usersRepository.save(userData);
   }
 
   async findOneUser(email: string): Promise<FindOneUserResponse> {
@@ -61,27 +72,57 @@ export class UserService {
     };
   }
 
-  async userLogin(email: string, password: string): Promise<LoginResponse> {
-    const response = await this.findOneUser(email);
-    const user = response.user;
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (user && isMatch) {
+  async userLogin(
+    email: string,
+    password: string,
+  ): Promise<Partial<LoginResponse>> {
+    try {
+      const response = await this.findOneUser(email);
+
+      if (!response.user) {
+        return response;
+      }
+
+      const isMatch = await bcrypt.compare(password, response.user.password);
+
+      if (isMatch) {
+        const token = await this.authService.generateToken(
+          response.user.id,
+          response.user.email,
+        );
+        return {
+          message: 'Login realizado com sucesso.',
+          isLogged: true,
+          data: response.user,
+        };
+      }
+    } catch (error) {
       return {
-        message: 'Login realizado com sucesso.',
-        isLogged: true,
-        data: user,
+        error: error.message,
+        isLogged: false,
       };
     }
-
-    return {
-      message: 'Credenciais inválidas.',
-      isLogged: false,
-    };
   }
 
   async hashPassword(password: string): Promise<string> {
     const saltOrRounds = 10;
     const hash = await bcrypt.hash(password, saltOrRounds);
     return hash;
+  }
+
+  async createUser(
+    userdata: CreateUser,
+  ): Promise<{ message?: string; data?: User; error?: Error }> {
+    try {
+      userdata.password = await this.hashPassword(userdata.password);
+      const newUser = this.usersRepository.create(userdata);
+      const response = await this.usersRepository.save(newUser);
+      return {
+        message: 'Usuário cadastrado com sucesso.',
+        data: response,
+      };
+    } catch (error) {
+      return { error: error.message };
+    }
   }
 }

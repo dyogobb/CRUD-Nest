@@ -10,29 +10,15 @@ export class AuthService {
   ) {}
 
   async generateToken(
+    id: number,
     email: string,
-    password: string,
   ): Promise<{
-    message: string;
-    isLogged: boolean;
-    access_token?: string | UnauthorizedException;
+    access_token?: string;
   }> {
-    const user = await this.usersService.userLogin(email, password);
-    if (user.isLogged) {
-      const payload = { sub: user.data.id, email: user.data.email };
-      const token = await this.jwtService.signAsync(payload);
-      await this.usersService.updateUser(user.data.id, { token: token });
-      return {
-        message: user.message,
-        isLogged: user.isLogged,
-        access_token: token,
-      };
-    }
-
+    const payload = { sub: id, email: email };
+    const token = await this.jwtService.signAsync(payload);
     return {
-      message: user.message,
-      isLogged: user.isLogged,
-      access_token: new UnauthorizedException(),
+      access_token: token,
     };
   }
 }
