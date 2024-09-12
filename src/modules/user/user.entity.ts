@@ -18,8 +18,10 @@ export class User {
   email: string;
   @Column()
   password: string;
-  @Column()
-  isActive: boolean;
+  @Column({ default: false })
+  is_logged: boolean;
+  @Column({ default: true })
+  is_active: boolean;
   @Column({ nullable: true })
   token?: string;
 }

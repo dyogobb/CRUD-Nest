@@ -51,20 +51,16 @@ export class UserController {
   @UseGuards(AuthGuard)
   @Put('update/:id')
   async updateUser(
-    @Body() userData: Partial<User>,
+    @Body() userData: { email: string; toUpdate: Partial<User> },
     @Res() res: Response,
     @Param('id') id: string,
   ): Promise<any> {
     try {
-      if (userData.id) {
-        return res.status(401).json({
-          message: 'O id não pode ser alterado',
-        });
-      }
-      await this.userService.updateUser(parseInt(id), userData);
-      return res.status(201).json({
-        message: 'Usuário atualizado com sucesso',
-      });
+      const response = await this.userService.updateUser(
+        parseInt(id),
+        userData.toUpdate,
+      );
+      return res.status(201).json(response);
     } catch (error) {
       return res.status(500).json({
         error: error.message,
@@ -73,7 +69,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('find')
+  @Get('my-account')
   async findUser(
     @Body() userData: Partial<User>,
     @Res() res: Response,
@@ -94,7 +90,7 @@ export class UserController {
     @Res() res: Response,
   ): Promise<Response> {
     try {
-      const response = await this.authService.generateToken(
+      const response = await this.userService.userLogin(
         userData.email,
         userData.password,
       );
@@ -114,7 +110,7 @@ export class UserController {
     @Param('id') id: string,
   ): Promise<Response> {
     try {
-      await this.userService.updateUser(parseInt(id, 10), { isActive: false });
+      await this.userService.updateUser(parseInt(id, 10), { is_active: false });
       return res.status(202).json({
         message: 'Usuário desativado com sucesso',
       });

@@ -5,6 +5,7 @@ import { User } from './user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth/auth.service';
+import { UpdateResult } from 'typeorm';
 
 interface FindOneUserResponse {
   message: string;
@@ -16,15 +17,7 @@ interface LoginResponse {
   data?: User;
   isLogged: boolean;
   error?: Error;
-}
-
-interface UpdateUser {
-  frist_name: string;
-  last_name: string;
-  email: string;
-  password: string;
-  isActive: boolean;
-  token: string;
+  access_token?: string;
 }
 
 interface CreateUser {
@@ -47,11 +40,41 @@ export class UserService {
     return this.usersRepository.find();
   }
 
-  async updateUser(id: number, userData: Partial<UpdateUser>): Promise<void> {
-    if (userData.password) {
-      userData.password = await this.hashPassword(userData.password);
+  async updateUser(
+    id: number,
+    userData: Partial<User>,
+  ): Promise<{
+    message?: string;
+    data?: Partial<User> | UpdateResult;
+    error?: Error;
+  }> {
+    try {
+      if (userData.id) {
+        return { message: 'O id não pode ser alterado' };
+      }
+
+      const response = await this.findOneUser(userData.email);
+
+      if (!response.user) {
+        return response;
+      }
+
+      if (response.user.id !== id) {
+        return { message: 'Este id não pertence ao usuário informado.' };
+      }
+
+      if (userData.password) {
+        userData.password = await this.hashPassword(userData.password);
+      }
+
+      await this.usersRepository.update(id, userData);
+
+      return { message: 'Usuário atualizado.' };
+    } catch (error) {
+      return {
+        error: error.message,
+      };
     }
-    await this.usersRepository.update(id, userData);
   }
 
   async findOneUser(email: string): Promise<FindOneUserResponse> {
@@ -66,6 +89,7 @@ export class UserService {
         message: 'O usuário não existe',
       };
     }
+
     return {
       message: 'Usuário encontrado',
       user: user,
@@ -85,17 +109,31 @@ export class UserService {
 
       const isMatch = await bcrypt.compare(password, response.user.password);
 
-      if (isMatch) {
-        const token = await this.authService.generateToken(
-          response.user.id,
-          response.user.email,
-        );
+      if (!isMatch) {
         return {
-          message: 'Login realizado com sucesso.',
-          isLogged: true,
-          data: response.user,
+          message: 'Senha inválida.',
+          isLogged: false,
         };
       }
+
+      await this.updateUser(response.user.id, { token: null });
+
+      const token = await this.authService.generateToken(
+        response.user.id,
+        response.user.email,
+      );
+
+      await this.updateUser(response.user.id, {
+        token: token.token,
+        is_logged: true,
+      });
+
+      const updated = await this.findOneUser(email);
+      return {
+        message: 'Login realizado com sucesso.',
+        isLogged: true,
+        data: updated.user,
+      };
     } catch (error) {
       return {
         error: error.message,
