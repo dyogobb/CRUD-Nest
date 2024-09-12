@@ -53,16 +53,6 @@ export class UserService {
         return { message: 'O id não pode ser alterado' };
       }
 
-      const response = await this.findOneUser(userData.email);
-
-      if (!response.user) {
-        return response;
-      }
-
-      if (response.user.id !== id) {
-        return { message: 'Este id não pertence ao usuário informado.' };
-      }
-
       if (userData.password) {
         userData.password = await this.hashPassword(userData.password);
       }
@@ -107,6 +97,12 @@ export class UserService {
         return response;
       }
 
+      if (!response.user.is_active) {
+        return {
+          message: 'Este usuário não está ativo.',
+        };
+      }
+
       const isMatch = await bcrypt.compare(password, response.user.password);
 
       if (!isMatch) {
@@ -115,8 +111,6 @@ export class UserService {
           isLogged: false,
         };
       }
-
-      await this.updateUser(response.user.id, { token: null });
 
       const token = await this.authService.generateToken(
         response.user.id,
@@ -129,9 +123,9 @@ export class UserService {
       });
 
       const updated = await this.findOneUser(email);
+
       return {
         message: 'Login realizado com sucesso.',
-        isLogged: true,
         data: updated.user,
       };
     } catch (error) {
