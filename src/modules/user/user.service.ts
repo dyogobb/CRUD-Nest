@@ -158,5 +158,7 @@ export class UserService {
     }
   }
 
-  async deactvateUser(userData: Partial<User>): Promise<{ Message: string }> {}
+  async deactvateUser(userData: Partial<User>): Promise<{ Message: string }> {
+    return;
+  }
 }
