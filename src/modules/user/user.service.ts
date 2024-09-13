@@ -159,6 +159,8 @@ export class UserService {
   }
 
   async deactvateUser(userData: Partial<User>): Promise<{ Message: string }> {
-    return;
+    return {
+      message: 'teste',
+    };
   }
 }
