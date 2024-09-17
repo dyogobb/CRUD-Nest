@@ -12,7 +12,6 @@ Este é um CRUD básico feito em NestJS com TypeORM. O projeto ainda está em an
 
 Para rodar o projeto, você precisa ter o PostgreSQL instalado na sua máquina e um arquivo `.env` configurado com as seguintes variáveis de ambiente:
 
-```plaintext
 HOST_DB= nome_do_host
 PORT_DB= porta_de_conexão_do_banco_de_dados
 USERNAME_DB= nome_de_usuário
