@@ -49,6 +49,12 @@ export class UserService {
     error?: Error;
   }> {
     try {
+      const storedUser = await this.findOneUser(userData.email);
+
+      // if (id !== storedUser.user.id) {
+      //   return { message: 'O id informado não pertence ao usuário.' };
+      // }
+
       if (userData.id) {
         return { message: 'O id não pode ser alterado' };
       }
@@ -158,9 +164,29 @@ export class UserService {
     }
   }
 
-  async deactvateUser(userData: Partial<User>): Promise<{ Message: string }> {
+  async deactvateUser(userData: Partial<User>): Promise<{ message: string }> {
+    const storedUser = await this.findOneUser(userData.email);
+
+    if (userData.id !== storedUser.user.id) {
+      return {
+        message: 'Id inválido.',
+      };
+    }
+
+    const isMatch = await bcrypt.compare(
+      userData.password,
+      storedUser.user.password,
+    );
+
+    if (!isMatch) {
+      return {
+        message: 'Senha inválida.',
+      };
+    }
+
+    await this.updateUser(userData.id, { is_active: false });
     return {
-      message: 'teste',
+      message: 'Usuário desativado.',
     };
   }
 }

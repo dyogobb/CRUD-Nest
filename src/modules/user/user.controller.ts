@@ -103,17 +103,15 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('delete/:id')
+  @Post('delete')
   async deleteUser(
     @Body() userData: Partial<User>,
     @Res() res: Response,
-    @Param('id') id: string,
   ): Promise<Response> {
     try {
-      await this.userService.updateUser(parseInt(id, 10), { is_active: false });
-      return res.status(202).json({
-        message: 'Usuário desativado com sucesso',
-      });
+      return res
+        .status(200)
+        .json(await this.userService.deactvateUser(userData));
     } catch (error) {
       return res.status(500).json({
         error: error.message,
