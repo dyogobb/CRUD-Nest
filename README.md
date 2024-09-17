@@ -4,7 +4,11 @@ Este é um CRUD básico feito em NestJS com TypeORM. O projeto ainda está em an
 
 ## Como Rodar o Projeto
 
-> **Nota:** A validação do token ainda não está completamente implementada. Atualmente, é possível usar tokens de diferentes usuários, e a requisição ainda funcionará. Esse é um problema que estou ciente e vou corrigir em breve.
+### Notas Gerais
+
+- **Validação do Token:** A validação do token ainda não está completamente implementada. Atualmente, é possível usar tokens de diferentes usuários, e a requisição ainda funcionará. Esse é um problema que estou ciente e vou corrigir em breve.
+- **Validação Geral:** Preciso melhorar a validação em todas as requisições. Como não tenho muita experiência com o backend, vou ajustando e corrigindo os problemas conforme eles aparecem.
+
 
 Para rodar o projeto, você precisa ter o PostgreSQL instalado na sua máquina e um arquivo `.env` configurado com as seguintes variáveis de ambiente:
 
