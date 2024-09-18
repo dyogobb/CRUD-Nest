@@ -54,9 +54,7 @@ export class UserService {
       return storedUser;
     }
 
-    const verifyId = await this.authService.extractId(userData.token);
-
-    if (verifyId !== storedUser.user.id) {
+    if (!(await this.verifyTokenById(userData.token, storedUser.user.id))) {
       return { message: 'Token não pertence ao usuário.' };
     }
 
@@ -79,6 +77,7 @@ export class UserService {
   async findUser(
     email: string,
     password: string,
+    token?: string,
   ): Promise<{ message: string; user?: User }> {
     const user = await this.usersRepository.findOne({
       where: {
@@ -90,6 +89,14 @@ export class UserService {
       return {
         message: 'O usuário não foi encontrado, verifique o e-mail.',
       };
+    }
+
+    if (token) {
+      if (!(await this.verifyTokenById(token, user.id))) {
+        return {
+          message: 'Token não pertence ao usuário.',
+        };
+      }
     }
 
     if (!user.is_active) {
@@ -166,6 +173,16 @@ export class UserService {
     } catch (error) {
       return { error: error.message };
     }
+  }
+
+  async verifyTokenById(token: string, id: number) {
+    const verifyId = await this.authService.extractId(token);
+
+    if (verifyId !== id) {
+      return false;
+    }
+
+    return true;
   }
 
   // async deactvateUser(userData: Partial<User>): Promise<{ message: string }> {

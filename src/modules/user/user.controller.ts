@@ -72,13 +72,19 @@ export class UserController {
   @UseGuards(AuthGuard)
   @Get('my-account')
   async findUser(
-    @Body() userData: { email: string; password: string },
+    @Body() userData: { email: string; password: string; token: string },
     @Res() res: Response,
   ): Promise<Response> {
     try {
+      if (!userData.token) {
+        return res
+          .status(400)
+          .json({ message: 'Token obrigatório no corpo da requisição.' });
+      }
       const response = await this.userService.findUser(
         userData.email,
         userData.password,
+        userData.token,
       );
       return res.status(200).json(response);
     } catch (error) {

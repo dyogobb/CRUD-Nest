@@ -33,8 +33,6 @@ export class AuthGuard implements CanActivate {
         secret: jwtConstants.secret,
       });
 
-      console.log(payload);
-      console.log('aqui');
       const user = await this.userRepository.findOne({
         where: {
           email: payload.email,
