@@ -7,25 +7,28 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth/auth.service';
 import { UpdateResult } from 'typeorm';
 
-interface FindOneUserResponse {
-  message: string;
-  user?: User;
-}
-
-interface LoginResponse {
-  message?: string;
-  data?: User;
-  isLogged: boolean;
-  error?: Error;
-  access_token?: string;
-}
-
 interface CreateUser {
   frist_name: string;
   last_name: string;
   email: string;
   password: string;
-  isActive: boolean;
+}
+
+interface UpdateUserData {
+  email: string;
+  password: string;
+  token: string;
+  toUpdate: Partial<CanUpdate>;
+}
+
+interface CanUpdate {
+  frist_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  token: string;
+  is_logged: boolean;
+  is_active: boolean;
 }
 
 @Injectable()
@@ -40,40 +43,43 @@ export class UserService {
     return this.usersRepository.find();
   }
 
-  async updateUser(
-    id: number,
-    userData: Partial<User>,
-  ): Promise<{
+  async updateUser(userData: UpdateUserData): Promise<{
     message?: string;
     data?: Partial<User> | UpdateResult;
     error?: Error;
   }> {
-    try {
-      const storedUser = await this.findOneUser(userData.email);
+    const storedUser = await this.findUser(userData.email, userData.password);
 
-      // if (id !== storedUser.user.id) {
-      //   return { message: 'O id informado não pertence ao usuário.' };
-      // }
-
-      if (userData.id) {
-        return { message: 'O id não pode ser alterado' };
-      }
-
-      if (userData.password) {
-        userData.password = await this.hashPassword(userData.password);
-      }
-
-      await this.usersRepository.update(id, userData);
-
-      return { message: 'Usuário atualizado.' };
-    } catch (error) {
-      return {
-        error: error.message,
-      };
+    if (!storedUser.user) {
+      return storedUser;
     }
+
+    const verifyId = await this.authService.extractId(userData.token);
+
+    if (verifyId !== storedUser.user.id) {
+      return { message: 'Token não pertence ao usuário.' };
+    }
+
+    if (userData.toUpdate.password) {
+      userData.password = await this.hashPassword(userData.password);
+    }
+
+    await this.usersRepository.update(storedUser.user.id, userData.toUpdate);
+
+    return {
+      message: 'Usuário atualizado.',
+      data: await this.usersRepository.findOne({
+        where: {
+          email: userData.email,
+        },
+      }),
+    };
   }
 
-  async findOneUser(email: string): Promise<FindOneUserResponse> {
+  async findUser(
+    email: string,
+    password: string,
+  ): Promise<{ message: string; user?: User }> {
     const user = await this.usersRepository.findOne({
       where: {
         email: email,
@@ -82,7 +88,21 @@ export class UserService {
 
     if (user === null) {
       return {
-        message: 'O usuário não existe',
+        message: 'O usuário não foi encontrado, verifique o e-mail.',
+      };
+    }
+
+    if (!user.is_active) {
+      return {
+        message: 'Usuário inativo.',
+      };
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return {
+        message: 'Senha inválida',
       };
     }
 
@@ -95,49 +115,30 @@ export class UserService {
   async userLogin(
     email: string,
     password: string,
-  ): Promise<Partial<LoginResponse>> {
+  ): Promise<{ message?: string; data?: User; error?: Error }> {
     try {
-      const response = await this.findOneUser(email);
+      const response = await this.findUser(email, password);
 
       if (!response.user) {
         return response;
       }
 
-      if (!response.user.is_active) {
-        return {
-          message: 'Este usuário não está ativo.',
-        };
-      }
+      const user = response.user;
 
-      const isMatch = await bcrypt.compare(password, response.user.password);
+      const token = await this.authService.generateToken(user.id, user.email);
 
-      if (!isMatch) {
-        return {
-          message: 'Senha inválida.',
-          isLogged: false,
-        };
-      }
-
-      const token = await this.authService.generateToken(
-        response.user.id,
-        response.user.email,
-      );
-
-      await this.updateUser(response.user.id, {
+      await this.usersRepository.update(user.id, {
         token: token.token,
         is_logged: true,
       });
 
-      const updated = await this.findOneUser(email);
-
       return {
         message: 'Login realizado com sucesso.',
-        data: updated.user,
+        data: (await this.findUser(user.email, password)).user,
       };
     } catch (error) {
       return {
         error: error.message,
-        isLogged: false,
       };
     }
   }
@@ -149,12 +150,15 @@ export class UserService {
   }
 
   async createUser(
-    userdata: CreateUser,
+    userData: CreateUser,
   ): Promise<{ message?: string; data?: User; error?: Error }> {
     try {
-      userdata.password = await this.hashPassword(userdata.password);
-      const newUser = this.usersRepository.create(userdata);
+      userData.password = await this.hashPassword(userData.password);
+
+      const newUser = this.usersRepository.create(userData);
+
       const response = await this.usersRepository.save(newUser);
+
       return {
         message: 'Usuário cadastrado com sucesso.',
         data: response,
@@ -164,29 +168,29 @@ export class UserService {
     }
   }
 
-  async deactvateUser(userData: Partial<User>): Promise<{ message: string }> {
-    const storedUser = await this.findOneUser(userData.email);
+  // async deactvateUser(userData: Partial<User>): Promise<{ message: string }> {
+  //   const storedUser = await this.findOneUser(userData.email);
 
-    if (userData.id !== storedUser.user.id) {
-      return {
-        message: 'Id inválido.',
-      };
-    }
+  //   if (userData.id !== storedUser.user.id) {
+  //     return {
+  //       message: 'Id inválido.',
+  //     };
+  //   }
 
-    const isMatch = await bcrypt.compare(
-      userData.password,
-      storedUser.user.password,
-    );
+  //   const isMatch = await bcrypt.compare(
+  //     userData.password,
+  //     storedUser.user.password,
+  //   );
 
-    if (!isMatch) {
-      return {
-        message: 'Senha inválida.',
-      };
-    }
+  //   if (!isMatch) {
+  //     return {
+  //       message: 'Senha inválida.',
+  //     };
+  //   }
 
-    await this.updateUser(userData.id, { is_active: false });
-    return {
-      message: 'Usuário desativado.',
-    };
-  }
+  //   await this.updateUser({ id: userData.id, is_active: false });
+  //   return {
+  //     message: 'Usuário desativado.',
+  //   };
+  // }
 }

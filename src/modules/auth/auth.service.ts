@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
+interface PayloadType {
+  email: string;
+  sub: number;
+}
+
 @Injectable()
 export class AuthService {
   constructor(private jwtService: JwtService) {}
@@ -16,5 +21,10 @@ export class AuthService {
     return {
       token: token,
     };
+  }
+
+  async extractId(token: string) {
+    const payload: PayloadType = await this.jwtService.decode(token);
+    return payload.sub;
   }
 }

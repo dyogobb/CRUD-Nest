@@ -6,7 +6,6 @@ import {
   Res,
   Put,
   UseGuards,
-  Param,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './user.entity';
@@ -48,18 +47,20 @@ export class UserController {
     }
   }
 
-  @UseGuards(AuthGuard)
-  @Put('update/:id')
+  @Put('update')
   async updateUser(
-    @Body() userData: { email: string; toUpdate: Partial<User> },
+    @Body()
+    userData: {
+      email: string;
+      password: string;
+      token: string;
+      toUpdate: Partial<User>;
+    },
     @Res() res: Response,
-    @Param('id') id: string,
   ): Promise<any> {
     try {
-      const response = await this.userService.updateUser(
-        parseInt(id),
-        userData.toUpdate,
-      );
+      const response = await this.userService.updateUser(userData);
+
       return res.status(201).json(response);
     } catch (error) {
       return res.status(500).json({
@@ -71,26 +72,11 @@ export class UserController {
   @UseGuards(AuthGuard)
   @Get('my-account')
   async findUser(
-    @Body() userData: Partial<User>,
+    @Body() userData: { email: string; password: string },
     @Res() res: Response,
   ): Promise<Response> {
     try {
-      const response = await this.userService.findOneUser(userData.email);
-      return res.status(200).json(response);
-    } catch (error) {
-      return res.status(500).json({
-        error: error.message,
-      });
-    }
-  }
-
-  @Post('login')
-  async userLogin(
-    @Body() userData: Partial<User>,
-    @Res() res: Response,
-  ): Promise<Response> {
-    try {
-      const response = await this.userService.userLogin(
+      const response = await this.userService.findUser(
         userData.email,
         userData.password,
       );
@@ -102,20 +88,39 @@ export class UserController {
     }
   }
 
-  @UseGuards(AuthGuard)
-  @Post('delete')
-  async deleteUser(
-    @Body() userData: Partial<User>,
+  @Post('login')
+  async userLogin(
+    @Body() userData: { email: string; password: string },
     @Res() res: Response,
   ): Promise<Response> {
     try {
-      return res
-        .status(200)
-        .json(await this.userService.deactvateUser(userData));
+      const response = await this.userService.userLogin(
+        userData.email,
+        userData.password,
+      );
+
+      return res.status(200).json(response);
     } catch (error) {
       return res.status(500).json({
         error: error.message,
       });
     }
   }
+
+  // @UseGuards(AuthGuard)
+  // @Post('delete')
+  // async deleteUser(
+  //   @Body() userData: Partial<User>,
+  //   @Res() res: Response,
+  // ): Promise<Response> {
+  //   try {
+  //     return res
+  //       .status(200)
+  //       .json(await this.userService.deactvateUser(userData));
+  //   } catch (error) {
+  //     return res.status(500).json({
+  //       error: error.message,
+  //     });
+  //   }
+  // }
 }
