@@ -13,7 +13,12 @@ import { User } from './user.entity';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { AuthGuard } from '../auth/auth.guard';
-import { CreateUserDto, LoginDto, MyAccountDto } from './user.validation';
+import {
+  CreateUserDto,
+  LoginDto,
+  MyAccountDto,
+  UpdateUserDto,
+} from './user.validation';
 
 @Controller('user')
 export class UserController {
@@ -44,16 +49,15 @@ export class UserController {
   @Put('update')
   async updateUser(
     @Body()
-    userData: {
-      email: string;
-      password: string;
-      token: string;
-      toUpdate: Partial<User>;
-    },
+    userData: UpdateUserDto,
+    @Headers('authorization') token: string,
     @Res() res: Response,
   ): Promise<any> {
     try {
-      const response = await this.userService.updateUser(userData);
+      const response = await this.userService.updateUser(
+        userData,
+        token.split(' ')[1],
+      );
 
       return res.status(201).json(response);
     } catch (error) {

@@ -16,9 +16,7 @@ interface CreateUser {
 
 interface UpdateUserData {
   email: string;
-  password: string;
-  token: string;
-  toUpdate: Partial<CanUpdate>;
+  to_update: Partial<CanUpdate>;
 }
 
 interface CanUpdate {
@@ -43,26 +41,31 @@ export class UserService {
     return this.usersRepository.find();
   }
 
-  async updateUser(userData: UpdateUserData): Promise<{
+  async updateUser(
+    userData: UpdateUserData,
+    token: string,
+  ): Promise<{
     message?: string;
     data?: Partial<User> | UpdateResult;
     error?: Error;
   }> {
-    const storedUser = await this.findUser(userData.email, userData.password);
+    const storedUser = await this.findUser(userData.email, token);
 
     if (!storedUser.user) {
       return storedUser;
     }
 
-    if (!(await this.verifyTokenById(userData.token, storedUser.user.id))) {
-      return { message: 'Token não pertence ao usuário.' };
+    if (!(await this.verifyTokenById(token, storedUser.user.id))) {
+      return { message: 'O token não pertence ao usuário.' };
     }
 
-    if (userData.toUpdate.password) {
-      userData.password = await this.hashPassword(userData.password);
+    if (userData.to_update.password) {
+      userData.to_update.password = await this.hashPassword(
+        userData.to_update.password,
+      );
     }
 
-    await this.usersRepository.update(storedUser.user.id, userData.toUpdate);
+    await this.usersRepository.update(storedUser.user.id, userData.to_update);
 
     return {
       message: 'Usuário atualizado.',
