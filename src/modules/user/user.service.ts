@@ -76,8 +76,7 @@ export class UserService {
 
   async findUser(
     email: string,
-    password: string,
-    token?: string,
+    token: string,
   ): Promise<{ message: string; user?: User }> {
     const user = await this.usersRepository.findOne({
       where: {
@@ -105,14 +104,6 @@ export class UserService {
       };
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return {
-        message: 'Senha inválida',
-      };
-    }
-
     return {
       message: 'Usuário encontrado',
       user: user,
@@ -124,13 +115,25 @@ export class UserService {
     password: string,
   ): Promise<{ message?: string; data?: User; error?: Error }> {
     try {
-      const response = await this.findUser(email, password);
+      const user = await this.usersRepository.findOne({
+        where: {
+          email: email,
+        },
+      });
 
-      if (!response.user) {
-        return response;
+      if (!user) {
+        return {
+          message: 'O usuário não foi encontrado, verifique o e-mail.',
+        };
       }
 
-      const user = response.user;
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) {
+        return {
+          message: 'Senha inválida.',
+        };
+      }
 
       const token = await this.authService.generateToken(user.id, user.email);
 
@@ -141,7 +144,11 @@ export class UserService {
 
       return {
         message: 'Login realizado com sucesso.',
-        data: (await this.findUser(user.email, password)).user,
+        data: await this.usersRepository.findOne({
+          where: {
+            email: email,
+          },
+        }),
       };
     } catch (error) {
       return {

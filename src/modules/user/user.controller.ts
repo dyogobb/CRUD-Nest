@@ -6,13 +6,14 @@ import {
   Res,
   Put,
   UseGuards,
+  Headers,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './user.entity';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { AuthGuard } from '../auth/auth.guard';
-import { CreateUserDto } from './user.validation';
+import { CreateUserDto, LoginDto, MyAccountDto } from './user.validation';
 
 @Controller('user')
 export class UserController {
@@ -65,19 +66,14 @@ export class UserController {
   @UseGuards(AuthGuard)
   @Get('my-account')
   async findUser(
-    @Body() userData: { email: string; password: string; token: string },
+    @Body() userData: MyAccountDto,
+    @Headers('authorization') token: string,
     @Res() res: Response,
   ): Promise<Response> {
     try {
-      if (!userData.token) {
-        return res
-          .status(400)
-          .json({ message: 'Token obrigatório no corpo da requisição.' });
-      }
       const response = await this.userService.findUser(
         userData.email,
-        userData.password,
-        userData.token,
+        token.split(' ')[1],
       );
       return res.status(200).json(response);
     } catch (error) {
@@ -89,7 +85,7 @@ export class UserController {
 
   @Post('login')
   async userLogin(
-    @Body() userData: { email: string; password: string },
+    @Body() userData: LoginDto,
     @Res() res: Response,
   ): Promise<Response> {
     try {
