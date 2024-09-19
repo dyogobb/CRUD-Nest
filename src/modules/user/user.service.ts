@@ -195,29 +195,34 @@ export class UserService {
     return true;
   }
 
-  // async deactvateUser(userData: Partial<User>): Promise<{ message: string }> {
-  //   const storedUser = await this.findOneUser(userData.email);
+  async deactvateUser(
+    userData: {
+      password: string;
+    },
+    token: string,
+  ): Promise<{ message: string }> {
+    const id = await this.authService.extractId(token);
+    const storedUser = await this.usersRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
 
-  //   if (userData.id !== storedUser.user.id) {
-  //     return {
-  //       message: 'Id inválido.',
-  //     };
-  //   }
+    const isMatch = await bcrypt.compare(
+      userData.password,
+      storedUser.password,
+    );
 
-  //   const isMatch = await bcrypt.compare(
-  //     userData.password,
-  //     storedUser.user.password,
-  //   );
+    if (!isMatch) {
+      return {
+        message: 'Senha inválida.',
+      };
+    }
 
-  //   if (!isMatch) {
-  //     return {
-  //       message: 'Senha inválida.',
-  //     };
-  //   }
+    await this.usersRepository.update(id, { is_active: false });
 
-  //   await this.updateUser({ id: userData.id, is_active: false });
-  //   return {
-  //     message: 'Usuário desativado.',
-  //   };
-  // }
+    return {
+      message: 'Usuário desativado.',
+    };
+  }
 }

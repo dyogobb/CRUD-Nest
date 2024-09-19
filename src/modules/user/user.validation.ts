@@ -73,3 +73,8 @@ export class UpdateUserDto {
   @Type(() => ToUpdateDto)
   to_update: ToUpdateDto;
 }
+
+export class DeactvateUserDto {
+  @IsNotEmpty()
+  password: string;
+}

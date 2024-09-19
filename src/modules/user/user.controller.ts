@@ -15,6 +15,7 @@ import { AuthService } from '../auth/auth.service';
 import { AuthGuard } from '../auth/auth.guard';
 import {
   CreateUserDto,
+  DeactvateUserDto,
   LoginDto,
   MyAccountDto,
   UpdateUserDto,
@@ -106,20 +107,23 @@ export class UserController {
     }
   }
 
-  // @UseGuards(AuthGuard)
-  // @Post('delete')
-  // async deleteUser(
-  //   @Body() userData: Partial<User>,
-  //   @Res() res: Response,
-  // ): Promise<Response> {
-  //   try {
-  //     return res
-  //       .status(200)
-  //       .json(await this.userService.deactvateUser(userData));
-  //   } catch (error) {
-  //     return res.status(500).json({
-  //       error: error.message,
-  //     });
-  //   }
-  // }
+  @UseGuards(AuthGuard)
+  @Post('delete')
+  async deleteUser(
+    @Body() userData: DeactvateUserDto,
+    @Res() res: Response,
+    @Headers('authorization') token: string,
+  ): Promise<Response> {
+    try {
+      return res
+        .status(200)
+        .json(
+          await this.userService.deactvateUser(userData, token.split(' ')[1]),
+        );
+    } catch (error) {
+      return res.status(500).json({
+        error: error.message,
+      });
+    }
+  }
 }
