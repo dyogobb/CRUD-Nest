@@ -8,7 +8,7 @@ import { AuthService } from '../auth/auth.service';
 import { UpdateResult } from 'typeorm';
 
 interface CreateUser {
-  frist_name: string;
+  first_name: string;
   last_name: string;
   email: string;
   password: string;

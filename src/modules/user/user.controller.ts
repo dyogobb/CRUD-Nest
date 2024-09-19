@@ -12,14 +12,7 @@ import { User } from './user.entity';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { AuthGuard } from '../auth/auth.guard';
-
-interface CreateUser {
-  frist_name: string;
-  last_name: string;
-  email: string;
-  password: string;
-  isActive: boolean;
-}
+import { CreateUserDto } from './user.validation';
 
 @Controller('user')
 export class UserController {
@@ -34,7 +27,7 @@ export class UserController {
 
   @Post('create')
   async createUser(
-    @Body() userData: CreateUser,
+    @Body() userData: CreateUserDto,
     @Res() res: Response,
   ): Promise<Response> {
     try {
