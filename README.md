@@ -1,6 +1,7 @@
 # CRUD Básico com NestJS e TypeORM
 
 Este é um CRUD básico feito em NestJS com TypeORM. O projeto ainda está em andamento e necessita de algumas melhorias, mas já implementa as principais funcionalidades de um sistema CRUD com autenticação JWT.
+OBS: No início o projeto era apenas para treinar a construção de um crud, mas ele será usado como o backend de outro projeto, https://github.com/dyogobb/My-Dev-Journey
 
 ## Como Rodar o Projeto
 
@@ -19,7 +20,7 @@ PASSWORD_DB= senha_do_postgres
 DATABASE= nome_do_banco_de_dados
 SECRET_JWT= string_aleatória_para_token_jwt
 
-Depois disso, rode um `npm install` e `npm run dev`, esses comandos devem instalar todas as dependências e rodar o projeto criando o banco de dados e a tabela.
+Depois disso, rode um `npm install` e `npm run dev`, esses comandos devem instalar todas as dependências e rodar o projeto (no modo de desenvolvimento) criando o banco de dados e a tabela.
 
 ## Como Rodar o Projeto
 
@@ -31,7 +32,6 @@ O fluxo de dados para a criação de um usuário começa com o envio de uma requ
 - `last_name`: Sobrenome do usuário (string)
 - `email`: E-mail do usuário (string)
 - `password`: Senha do usuário (string)
-- `isActive`: Status ativo do usuário (boolean)
 
 Após enviar essa requisição, o servidor processa os dados e cria um novo registro de usuário no banco de dados, retornando uma resposta de sucesso ou erro, dependendo da validação dos dados.
 
@@ -79,8 +79,6 @@ A requisição irá atualizar os campos especificados no JSON toUpdate para o us
 
 Para excluir um usuário, envie uma requisição `POST` para a rota `{{url}}/user/delete`. No corpo (body) da requisição, devem ser enviados os seguintes campos:
 
-- `id`: ID do usuário (string)
-- `email`: E-mail do usuário (string)
 - `password`: Senha do usuário (string)
 
 Além disso, é necessário incluir um `Bearer token` no cabeçalho de autorização (`Authorization`), que é o token JWT gerado durante o login.
