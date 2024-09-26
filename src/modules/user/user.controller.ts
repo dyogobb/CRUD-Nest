@@ -38,7 +38,12 @@ export class UserController {
     @Res() res: Response,
   ): Promise<Response> {
     try {
-      return res.status(200).json(await this.userService.createUser(userData));
+      const response = await this.userService.createUser(userData);
+      if (!response.data) {
+        return res.status(400).json(response);
+      }
+
+      return res.status(200).json(response.data);
     } catch (error) {
       return res.status(500).json({
         message: 'Erro ao criar usuário',
@@ -98,6 +103,10 @@ export class UserController {
         userData.email,
         userData.password,
       );
+
+      if (!response.data) {
+        return res.status(400).json(response);
+      }
 
       return res.status(200).json(response);
     } catch (error) {

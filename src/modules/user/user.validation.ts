@@ -18,6 +18,9 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   password: string;
+
+  @IsNotEmpty()
+  password_confirmation: string;
 }
 
 export class LoginDto {

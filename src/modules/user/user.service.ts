@@ -12,6 +12,7 @@ interface CreateUser {
   last_name: string;
   email: string;
   password: string;
+  password_confirmation: string;
 }
 
 interface UpdateUserData {
@@ -170,6 +171,11 @@ export class UserService {
     userData: CreateUser,
   ): Promise<{ message?: string; data?: User; error?: Error }> {
     try {
+      if (userData.password !== userData.password_confirmation) {
+        return {
+          message: 'As senhas não são iguais.',
+        };
+      }
       userData.password = await this.hashPassword(userData.password);
 
       const newUser = this.usersRepository.create(userData);
