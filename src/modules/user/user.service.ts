@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth/auth.service';
 import { UpdateResult } from 'typeorm';
+import { error } from 'console';
 
 interface CreateUser {
   first_name: string;
@@ -13,6 +14,18 @@ interface CreateUser {
   email: string;
   password: string;
   password_confirmation: string;
+}
+
+class CreateUserResponse {
+  message?: string;
+  data?: User;
+  error?: Error;
+
+  constructor(message?: string, data?: User, error?: Error) {
+    this.message = message;
+    this.data = data;
+    this.error = error;
+  }
 }
 
 interface UpdateUserData {
@@ -171,6 +184,12 @@ export class UserService {
     userData: CreateUser,
   ): Promise<{ message?: string; data?: User; error?: Error }> {
     try {
+      const emailInUse = await this.emailInUse(userData.email);
+
+      if (emailInUse) {
+        return new CreateUserResponse('Email já está sendo utilizado');
+      }
+
       if (userData.password !== userData.password_confirmation) {
         return {
           message: 'As senhas não são iguais.',
@@ -230,5 +249,11 @@ export class UserService {
     return {
       message: 'Usuário desativado.',
     };
+  }
+
+  async emailInUse(email: string): Promise<boolean> {
+    return await this.usersRepository.exists({
+      where: { email: email },
+    });
   }
 }

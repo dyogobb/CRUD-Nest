@@ -10,7 +10,6 @@ OBS: No início o projeto era apenas para treinar a construção de um crud, mas
 - **Validação do Token:** A validação do token ainda não está completamente implementada. Atualmente, é possível usar tokens de diferentes usuários, e a requisição ainda funcionará. Esse é um problema que estou ciente e vou corrigir em breve.
 - **Validação Geral:** Preciso melhorar a validação em todas as requisições. Como não tenho muita experiência com o backend, vou ajustando e corrigindo os problemas conforme eles aparecem.
 
-
 Para rodar o projeto, você precisa ter o PostgreSQL instalado na sua máquina e um arquivo `.env` configurado com as seguintes variáveis de ambiente:
 
 HOST_DB= nome_do_host
@@ -70,6 +69,7 @@ Para atualizar as informações de um usuário, envie uma requisição `PUT` par
     "email": "novo_email@example.com",
     "first_name": "NovoNome"
   }
+  ```
 
 Além disso, é necessário incluir um Bearer token no cabeçalho de autorização (Authorization), que é o token JWT gerado durante o login.
 
